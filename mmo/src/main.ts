@@ -27,12 +27,13 @@ import { seedWorld, type MmoCharacter, type World } from "./world.js";
 
 const SEED = Number.parseInt(process.env.MMO_SEED ?? "1", 10);
 const DAYS = Number.parseInt(process.env.MMO_DAYS ?? "1", 10);
+const TICKS = process.env.MMO_TICKS ? Number.parseInt(process.env.MMO_TICKS, 10) : DAYS * 24 * 60;
 const SCALE = (process.env.MMO_SCALE ?? "phase-a") as "phase-a" | "phase-b" | "full";
 
 const SCALES = {
-    "phase-a": { nPlayers: 5, nQuestGivers: 2, nTowns: 1 },
-    "phase-b": { nPlayers: 30, nQuestGivers: 6, nTowns: 2 },
-    "full":    { nPlayers: 120, nQuestGivers: 15, nTowns: 4 },
+    "phase-a": { seed: SEED, nPlayers: 5,   nQuestGivers: 2,  nTowns: 1, nDungeons: 1, mobsPerDungeon: 4 },
+    "phase-b": { seed: SEED, nPlayers: 30,  nQuestGivers: 6,  nTowns: 2, nDungeons: 2, mobsPerDungeon: 5 },
+    "full":    { seed: SEED, nPlayers: 120, nQuestGivers: 15, nTowns: 4, nDungeons: 4, mobsPerDungeon: 6 },
 } as const;
 
 const STATE: {
@@ -157,7 +158,7 @@ async function main(): Promise<void> {
 
     console.log(`characters=${STATE.characters.length} locations=${STATE.locations.length} items=${STATE.items.length}`);
 
-    const ticks = DAYS * 24 * 60;
+    const ticks = TICKS;
     let lastDay = -1;
     for (let t = 0; t < ticks; t++) {
         const day = dayOf(STATE.timestamp);
@@ -168,11 +169,23 @@ async function main(): Promise<void> {
 
         const order = STATE.characters.slice().sort(() => Math.random() - 0.5);
         for (const cid of order) {
-            try {
-                await selectAction({ initiatorID: cid });
-            } catch (e) {
-                // ignore
+            try { await selectAction({ initiatorID: cid }); } catch { /* ignore */ }
+        }
+        // Drain urgent queues so multi-step reaction chains (strike→take-damage→
+        // retaliate→die→drop-loot/start-corpse-run/gain-xp/quest-progress/share-xp
+        // /level-up) all resolve within the tick they were initiated.
+        for (let pass = 0; pass < 8; pass++) {
+            let any = false;
+            for (const cid of order) {
+                for (let safety = 0; safety < 32; safety++) {
+                    try {
+                        const res = await selectAction({ initiatorID: cid, urgentOnly: true });
+                        if (!res) break;
+                        any = true;
+                    } catch { break; }
+                }
             }
+            if (!any) break;
         }
         await tickPlanner();
         STATE.timestamp = (STATE.timestamp + TICK_MINUTES) as DiegeticTimestamp;

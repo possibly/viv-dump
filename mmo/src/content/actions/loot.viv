@@ -1,4 +1,6 @@
-// Loot and equipment actions (placeholder for now)
+// Loot and equipment actions.
+// drop-loot is queued automatically by `die`. loot-corpse is a general action
+// that any present, alive character may attempt against a fallen character.
 
 action loot-corpse:
     gloss: "@looter loots @corpse"
@@ -10,7 +12,40 @@ action loot-corpse:
         @corpse:
             as: recipient
     conditions:
+        @looter.alive == true
         @corpse.alive == false
         @corpse.location == @looter.location
+        @corpse.gold > 0
     effects:
         @looter.gold += 1
+        @corpse.gold -= 1
+    embargoes:
+        embargo:
+            time: 30 minutes
+            roles: @looter, @corpse
+
+action equip-item:
+    gloss: "@wearer equips @item"
+    importance: 1
+    tags: equipment
+    roles:
+        @wearer:
+            as: initiator
+        @item:
+            as: item
+            from: @wearer.inventory
+    conditions:
+        @wearer.alive == true
+        @item.required_level <= @wearer.level
+        @item.slot != null
+    effects:
+        @wearer.equipped[@item.slot] = @item
+        @wearer.str += @item.stats.str
+        @wearer.agi += @item.stats.agi
+        @wearer.int_ += @item.stats.int_
+        @wearer.sta += @item.stats.sta
+        @wearer.spi += @item.stats.spi
+    embargoes:
+        embargo:
+            time: 1 hour
+            roles: @wearer, @item

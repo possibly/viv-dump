@@ -14,6 +14,21 @@ action-selector pick-player-action:
         (3) greet:
             with partial:
                 @a: @actor
+        (50) cast-resurrect:
+            with partial:
+                @healer: @actor
+        (4) loot-corpse:
+            with partial:
+                @looter: @actor
+        (4) accept-quest:
+            with partial:
+                @hero: @actor
+        (8) turn-in-quest:
+            with partial:
+                @hero: @actor
+        (3) form-party:
+            with partial:
+                @leader: @actor
 
 action-selector pick-mob-action:
     roles:

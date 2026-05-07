@@ -1,0 +1,57 @@
+// Progression: XP awards and level-ups.
+// gain-xp is queued by `die` when the killer is a player and victim is a mob/boss.
+// level-up triggers when xp crosses the next threshold.
+
+reserved action gain-xp:
+    gloss: "@hero gains experience"
+    importance: 2
+    tags: progression, xp
+    roles:
+        @hero:
+            as: initiator
+        @victim:
+            as: recipient
+    conditions:
+        @hero.alive == true
+    effects:
+        @hero.xp += 10
+    reactions:
+        queue action level-up:
+            with partial:
+                @hero: @hero
+            urgent: true
+            abandon: @hero.xp < @hero.level * 50
+        queue action quest-progress:
+            with partial:
+                @hero: @hero
+                @victim: @victim
+            urgent: true
+            abandon: @hero.has_active_quest == false
+        queue action share-xp:
+            with partial:
+                @hero: @hero
+            urgent: true
+            abandon: @hero.party == null
+
+reserved action level-up:
+    gloss: "@hero levels up"
+    report: "@hero reaches level @hero.level"
+    importance: #HIGH
+    tags: progression, level-up
+    roles:
+        @hero:
+            as: initiator
+    conditions:
+        @hero.alive == true
+        @hero.xp >= @hero.level * 50
+    effects:
+        @hero.level += 1
+        @hero.str += 2
+        @hero.agi += 1
+        @hero.int_ += 1
+        @hero.sta += 2
+        @hero.spi += 1
+        @hero.hp_max += 20
+        @hero.hp = @hero.hp_max
+        @hero.mp_max += 10
+        @hero.mp = @hero.mp_max

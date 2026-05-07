@@ -1,0 +1,46 @@
+// Party: two players form a band, then share XP from kills.
+
+action form-party:
+    gloss: "@leader and @follower form a party"
+    importance: 3
+    tags: party, social
+    roles:
+        @leader:
+            as: initiator
+        @follower:
+            as: recipient
+    conditions:
+        @leader.role == #PLAYER
+        @follower.role == #PLAYER
+        @leader != @follower
+        @leader.alive == true
+        @follower.alive == true
+        @leader.location == @follower.location
+        @leader.party == null
+        @follower.party == null
+    effects:
+        @leader.party = @leader
+        @follower.party = @leader
+    embargoes:
+        embargo:
+            time: forever
+            roles: @leader, @follower
+
+reserved action share-xp:
+    gloss: "@hero shares experience with @ally"
+    importance: 1
+    tags: party, xp, share
+    roles:
+        @hero:
+            as: initiator
+        @ally:
+            as: recipient
+    conditions:
+        @hero.alive == true
+        @ally.alive == true
+        @hero.party != null
+        @hero.party == @ally.party
+        @hero != @ally
+        @hero.location == @ally.location
+    effects:
+        @ally.xp += 5

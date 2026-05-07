@@ -19,6 +19,8 @@
   "scripts": {
     "compile": "vivc -i src/content/source.viv -o src/content/compiled_content_bundle.json",
     "start": "tsx --tsconfig tsconfig.json src/main.ts",
-    "build": "npm run compile && npm run start"
+    "build": "npm run compile && npm run start",
+    "demos": "tsx --tsconfig tsconfig.json src/demos/run-all.ts",
+    "demo": "tsx --tsconfig tsconfig.json"
   }
 }

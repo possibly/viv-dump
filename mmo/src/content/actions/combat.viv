@@ -13,6 +13,9 @@ action strike:
         @attacker.alive == true
         @target.alive == true
         @attacker.location == @target.location
+        (@attacker.role == #PLAYER && (@target.role == #MOB || @target.role == #BOSS))
+        || (@attacker.role == #MOB && @target.role == #PLAYER)
+        || (@attacker.role == #BOSS && @target.role == #PLAYER)
     effects:
         @target.hp -= 1
     reactions:
@@ -105,6 +108,13 @@ reserved action die:
             with partial:
                 @who: @who
             urgent: true
+            abandon: @who.role != #PLAYER
+        queue action gain-xp:
+            with partial:
+                @hero: @killer
+                @victim: @who
+            urgent: true
+            abandon: @killer.role != #PLAYER
     embargoes:
         embargo:
             time: forever

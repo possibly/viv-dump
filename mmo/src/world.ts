@@ -62,6 +62,9 @@ export interface MmoCharacter extends CharacterView {
     active_quests: string[];
     completed_quests: string[];
     daily_quest_last_accepted: Record<string, number>;
+    has_active_quest: boolean;
+    quest_kill_count: number;
+    quest_target: number;
 
     inventory: UID[];
     equipped: Record<number, UID | null>;
@@ -144,6 +147,9 @@ function newChar(id: UID, name: string, role: number, class_: number, home: UID,
         active_quests: [],
         completed_quests: [],
         daily_quest_last_accepted: {},
+        has_active_quest: false,
+        quest_kill_count: 0,
+        quest_target: 0,
         inventory: [],
         equipped: {},
         gold: 0,
@@ -174,6 +180,8 @@ export interface SeedOptions {
     nPlayers: number;
     nQuestGivers: number;
     nTowns: number;
+    nDungeons?: number;
+    mobsPerDungeon?: number;
 }
 
 export function seedWorld(opts: SeedOptions): World {
@@ -183,7 +191,10 @@ export function seedWorld(opts: SeedOptions): World {
     const characters: UID[] = [];
     const items: UID[] = [];
 
-    // Create towns
+    const nDungeons       = opts.nDungeons       ?? Math.max(1, opts.nTowns);
+    const mobsPerDungeon  = opts.mobsPerDungeon  ?? 4;
+
+    // Towns + town squares.
     const towns: UID[] = [];
     for (let i = 0; i < opts.nTowns; i++) {
         const townId = uid("town");
@@ -191,29 +202,77 @@ export function seedWorld(opts: SeedOptions): World {
         locations.push(townId);
         towns.push(townId);
 
-        // Town square inside town
         const squareId = uid("loc");
         entities[squareId] = newLoc(squareId, `Square of ${(entities[townId] as any).name}`, ENUMS.TOWN_SQUARE, townId);
         locations.push(squareId);
     }
 
-    // Create players in towns
+    // Dungeons: entrance → floor → boss room.
+    const dungeonFloors: UID[] = [];
+    const bossRooms: UID[] = [];
+    for (let d = 0; d < nDungeons; d++) {
+        const entranceId = uid("dungeon");
+        entities[entranceId] = newLoc(entranceId, `Dungeon ${d + 1} Entrance`, ENUMS.DUNGEON_ENTRANCE);
+        locations.push(entranceId);
+
+        const floorId = uid("loc");
+        entities[floorId] = newLoc(floorId, `Dungeon ${d + 1} Floor`, ENUMS.DUNGEON_FLOOR, entranceId);
+        locations.push(floorId);
+        dungeonFloors.push(floorId);
+
+        const bossId = uid("loc");
+        entities[bossId] = newLoc(bossId, `Dungeon ${d + 1} Boss Room`, ENUMS.BOSS_ROOM, entranceId);
+        locations.push(bossId);
+        bossRooms.push(bossId);
+    }
+
+    // Players (start in town).
     for (let i = 0; i < opts.nPlayers; i++) {
         const id = uid("char");
         const home = r.pick(towns);
         const loc = home;
         const cls = [ENUMS.WARRIOR, ENUMS.MAGE, ENUMS.CLERIC, ENUMS.ROGUE][i % 4]!;
         const ch = newChar(id, makeName(r), ENUMS.PLAYER, cls, home, loc);
+        // Roughly half the party should be at the dungeon to keep combat alive.
+        if (i % 2 === 1 && dungeonFloors.length > 0) {
+            (ch as any).location = r.pick(dungeonFloors);
+        }
         entities[id] = ch;
         characters.push(id);
     }
 
-    // Create quest givers
+    // Quest givers (in town).
     for (let i = 0; i < opts.nQuestGivers; i++) {
         const id = uid("char");
         const home = r.pick(towns);
-        const loc = home;
-        const ch = newChar(id, makeName(r), ENUMS.NPC_QUEST_GIVER, ENUMS.WARRIOR, home, loc);
+        const ch = newChar(id, makeName(r), ENUMS.NPC_QUEST_GIVER, ENUMS.WARRIOR, home, home);
+        entities[id] = ch;
+        characters.push(id);
+    }
+
+    // Mobs (one pack per dungeon floor).
+    for (const floorId of dungeonFloors) {
+        for (let m = 0; m < mobsPerDungeon; m++) {
+            const id = uid("char");
+            const ch = newChar(id, `Goblin ${m + 1}`, ENUMS.MOB, ENUMS.MOB_CLASS_GENERIC, floorId, floorId);
+            ch.hp = 10;
+            ch.hp_max = 10;
+            ch.str = 2;
+            ch.gold = 5;
+            entities[id] = ch;
+            characters.push(id);
+            (entities[floorId] as MmoLocation).mob_pack.push(id);
+        }
+    }
+
+    // Bosses (one per boss room).
+    for (const bossId of bossRooms) {
+        const id = uid("char");
+        const ch = newChar(id, `Dungeon Lord`, ENUMS.BOSS, ENUMS.MOB_CLASS_GENERIC, bossId, bossId);
+        ch.hp = 30;
+        ch.hp_max = 30;
+        ch.str = 4;
+        ch.gold = 50;
         entities[id] = ch;
         characters.push(id);
     }

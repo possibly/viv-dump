@@ -1,5 +1,7 @@
 // Death mechanics: corpse-run, respawn, resurrection
 
+// drop-loot is a chronicle event: a fallen body becomes lootable. The
+// corpse's existing gold is what gets transferred via loot-corpse.
 reserved action drop-loot:
     gloss: "@corpse drops loot"
     importance: 2
@@ -9,8 +11,6 @@ reserved action drop-loot:
             as: initiator
     conditions:
         @corpse.alive == false
-    effects:
-        @corpse.gold -= 10
 
 reserved action start-corpse-run:
     gloss: "@who begins to corpse-run"
@@ -69,7 +69,7 @@ reserved action respawn:
         @who.mp = @who.mp_max / 2
         @who.corpse_run_ticks_remaining = null
 
-reserved action cast-resurrect:
+action cast-resurrect:
     gloss: "@healer casts resurrect on @corpse"
     importance: #HIGH
     tags: magic, heal, resurrection
@@ -79,6 +79,9 @@ reserved action cast-resurrect:
         @corpse:
             as: recipient
     conditions:
+        @healer.role == #PLAYER
+        @corpse.role == #PLAYER
+        @healer.class_ == #CLERIC
         @healer.alive == true
         @corpse.alive == false
         @corpse.corpse_run_ticks_remaining > 0
