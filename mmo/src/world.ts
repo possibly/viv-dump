@@ -68,6 +68,9 @@ export interface MmoCharacter extends CharacterView {
     gold: number;
 
     mood: number;
+    fatigue: number;
+    composure: number | null;
+    alertness: number;
     memories: CharacterView["memories"];
 }
 
@@ -145,6 +148,9 @@ function newChar(id: UID, name: string, role: number, class_: number, home: UID,
         equipped: {},
         gold: 0,
         mood: 0,
+        fatigue: 0,
+        composure: null,
+        alertness: 3,
         memories: {},
     };
 }
