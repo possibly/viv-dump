@@ -8,10 +8,7 @@ action-selector pick-player-action:
         @actor.role == #PLAYER
         @actor.alive == true
     target with weights:
-        (5) strike:
-            with partial:
-                @attacker: @actor
-        (1) greet:
+        (10) greet:
             with partial:
                 @a: @actor
 

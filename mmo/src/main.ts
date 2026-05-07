@@ -158,24 +158,37 @@ async function main(): Promise<void> {
     console.log(`characters=${STATE.characters.length} locations=${STATE.locations.length} items=${STATE.items.length}`);
 
     const ticks = DAYS * 24 * 60;
+    console.log(`Starting tick loop: ${ticks} ticks`);
     let lastDay = -1;
+    let progressInterval = Math.max(1, Math.floor(ticks / 10));
     for (let t = 0; t < ticks; t++) {
         const day = dayOf(STATE.timestamp);
         if (day !== lastDay) {
+            console.log(`  [day ${day}]`);
             lastDay = day;
+        }
+        if (t > 0 && t % progressInterval === 0) {
+            console.log(`  tick ${t}/${ticks}, actions: ${STATE.actions.length}`);
         }
 
         const order = STATE.characters.slice().sort(() => Math.random() - 0.5);
-        for (const cid of order) {
+        for (let i = 0; i < order.length; i++) {
+            const cid = order[i]!;
             try {
                 await selectAction({ initiatorID: cid });
             } catch (e) {
-                // ignore
+                // ignore action errors
             }
         }
-        await tickPlanner();
+        try {
+            await tickPlanner();
+        } catch (e) {
+            console.error(`tickPlanner failed: ${e}`);
+            throw e;
+        }
         STATE.timestamp = (STATE.timestamp + TICK_MINUTES) as DiegeticTimestamp;
     }
+    console.log(`Tick loop complete.`);
 
     console.log(`\n=== Chronicle (${STATE.actions.length} actions) ===`);
     for (const aid of STATE.actions.slice(-10)) {
