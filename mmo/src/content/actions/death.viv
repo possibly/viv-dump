@@ -1,0 +1,121 @@
+// Death mechanics: corpse-run, respawn, resurrection
+
+// drop-loot is a chronicle event: a fallen body becomes lootable. The
+// corpse's existing gold is what gets transferred via loot-corpse.
+reserved action drop-loot:
+    gloss: "@corpse drops loot"
+    importance: 2
+    tags: death, loot
+    roles:
+        @corpse:
+            as: initiator
+    conditions:
+        @corpse.alive == false
+
+reserved action start-corpse-run:
+    gloss: "@who begins to corpse-run"
+    importance: 2
+    tags: death, corpse-run
+    roles:
+        @who:
+            as: initiator
+    conditions:
+        @who.alive == false
+        @who.corpse_run_ticks_remaining > 0
+    effects:
+        @who.mood -= 2
+    reactions:
+        queue action tick-corpse-run:
+            with partial:
+                @who: @who
+            time: after: 1 minute from action
+            repeat:
+                if:
+                    @who.alive == false
+                max: 3
+
+reserved action tick-corpse-run:
+    gloss: "@who corpse-runs... @who.corpse_run_ticks_remaining ticks left"
+    importance: 1
+    tags: death, corpse-run
+    roles:
+        @who:
+            as: initiator
+    conditions:
+        @who.alive == false
+        @who.corpse_run_ticks_remaining > 0
+    effects:
+        @who.corpse_run_ticks_remaining -= 1
+    reactions:
+        queue action respawn:
+            with:
+                @who: @who
+            urgent: true
+            abandon: @who.corpse_run_ticks_remaining > 0 || @who.alive == true
+
+reserved action respawn:
+    gloss: "@who respawns at their home town"
+    importance: #HIGH
+    tags: death, respawn
+    roles:
+        @who:
+            as: initiator
+    conditions:
+        @who.alive == false
+        @who.corpse_run_ticks_remaining == 0
+    effects:
+        @who.alive = true
+        @who.hp = @who.hp_max / 2
+        @who.mp = @who.mp_max / 2
+        @who.corpse_run_ticks_remaining = null
+
+action cast-resurrect:
+    gloss: "@healer casts resurrect on @corpse"
+    importance: #HIGH
+    tags: magic, heal, resurrection
+    roles:
+        @healer:
+            as: initiator
+        @corpse:
+            as: recipient
+    conditions:
+        @healer.role == #PLAYER
+        @corpse.role == #PLAYER
+        @healer.class_ == #CLERIC
+        @healer.alive == true
+        @corpse.alive == false
+        @corpse.corpse_run_ticks_remaining > 0
+        @healer.location == @corpse.location
+        @healer.mp >= 30
+    effects:
+        @healer.mp -= 30
+    reactions:
+        queue action resurrect-target:
+            with:
+                @healer: @healer
+                @corpse: @corpse
+            urgent: true
+    embargoes:
+        embargo:
+            time: 1 minute
+            roles: @healer, @corpse
+
+reserved action resurrect-target:
+    gloss: "@healer resurrects @corpse"
+    report: "@corpse is brought back to life"
+    importance: #CRITICAL
+    tags: magic, heal, resurrection
+    roles:
+        @healer:
+            as: initiator
+        @corpse:
+            as: recipient
+    conditions:
+        @corpse.alive == false
+        @corpse.corpse_run_ticks_remaining > 0
+        @healer.location == @corpse.location
+    effects:
+        @corpse.alive = true
+        @corpse.hp = @corpse.hp_max * 0.6
+        @corpse.mp = @corpse.mp_max * 0.4
+        @corpse.corpse_run_ticks_remaining = null

@@ -1,0 +1,45 @@
+// Reusable condition bundles for MMO world
+
+trope alive:
+    roles:
+        @who:
+            as: character
+    conditions:
+        @who.alive == true
+
+trope at-same-spot:
+    roles:
+        @a:
+            as: character
+        @b:
+            as: character
+    conditions:
+        @a.location == @b.location
+
+trope hostile:
+    roles:
+        @a:
+            as: character
+        @b:
+            as: character
+    conditions:
+        (@a.role == #PLAYER && (@b.role == #MOB || @b.role == #BOSS))
+        || (@b.role == #PLAYER && (@a.role == #MOB || @a.role == #BOSS))
+
+trope party-mate:
+    roles:
+        @a:
+            as: character
+        @b:
+            as: character
+    conditions:
+        @a.party != null
+        @a.party == @b.party
+
+trope downed:
+    roles:
+        @who:
+            as: character
+    conditions:
+        @who.alive == false
+        @who.corpse_run_ticks_remaining > 0

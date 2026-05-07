@@ -1,0 +1,72 @@
+// Quests: accept, progress (on mob kill), and complete.
+// Quest progress is stored on the player as a numeric counter
+// `quest_kill_count` for the (single) active hunt quest.
+
+action accept-quest:
+    gloss: "@hero accepts a quest from @npc"
+    importance: 3
+    tags: quest, accept
+    roles:
+        @hero:
+            as: initiator
+        @npc:
+            as: recipient
+    conditions:
+        @hero.role == #PLAYER
+        @npc.role == #NPC_QUEST_GIVER
+        @hero.location == @npc.location
+        @hero.alive == true
+        @hero.has_active_quest == false
+    effects:
+        @hero.has_active_quest = true
+        @hero.quest_kill_count = 0
+        @hero.quest_target = 3
+    embargoes:
+        embargo:
+            time: 1 day
+            roles: @hero, @npc
+
+reserved action quest-progress:
+    gloss: "@hero progresses on the hunt"
+    importance: 1
+    tags: quest, progress
+    roles:
+        @hero:
+            as: initiator
+        @victim:
+            as: recipient
+    conditions:
+        @hero.alive == true
+        @hero.has_active_quest == true
+    effects:
+        @hero.quest_kill_count += 1
+
+action turn-in-quest:
+    gloss: "@hero turns in their quest to @npc"
+    report: "@hero completes a hunt for @npc"
+    importance: #HIGH
+    tags: quest, complete
+    roles:
+        @hero:
+            as: initiator
+        @npc:
+            as: recipient
+    conditions:
+        @hero.role == #PLAYER
+        @npc.role == #NPC_QUEST_GIVER
+        @hero.location == @npc.location
+        @hero.alive == true
+        @hero.has_active_quest == true
+        @hero.quest_kill_count >= @hero.quest_target
+    effects:
+        @hero.has_active_quest = false
+        @hero.quest_kill_count = 0
+        @hero.quest_target = 0
+        @hero.gold += 25
+        @hero.xp += 30
+    reactions:
+        queue action level-up:
+            with partial:
+                @hero: @hero
+            urgent: true
+            abandon: @hero.xp < @hero.level * 50

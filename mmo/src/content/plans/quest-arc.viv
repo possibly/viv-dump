@@ -1,0 +1,12 @@
+// Quest arc plan (placeholder)
+
+plan quest-arc:
+    roles:
+        @player:
+            as: character
+    phases:
+        >quest:
+            wait:
+                timeout: 1 day
+                until: false
+            succeed;

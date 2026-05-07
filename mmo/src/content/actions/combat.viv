@@ -1,0 +1,121 @@
+// Combat actions: strike, take-damage, die, retaliate
+
+action strike:
+    gloss: "@attacker strikes @target"
+    importance: 3
+    tags: combat, melee
+    roles:
+        @attacker:
+            as: initiator
+        @target:
+            as: recipient
+    conditions:
+        @attacker.alive == true
+        @target.alive == true
+        @attacker.location == @target.location
+        (@attacker.role == #PLAYER && (@target.role == #MOB || @target.role == #BOSS))
+        || (@attacker.role == #MOB && @target.role == #PLAYER)
+        || (@attacker.role == #BOSS && @target.role == #PLAYER)
+    effects:
+        @target.hp -= 1
+    reactions:
+        queue action take-damage:
+            with partial:
+                @victim: @target
+                @source: @attacker
+            urgent: true
+    embargoes:
+        embargo:
+            time: 6 minutes
+            roles: @attacker, @target
+
+reserved action take-damage:
+    gloss: "@victim takes damage from @source"
+    importance: 3
+    tags: combat, damage
+    roles:
+        @victim:
+            as: initiator
+        @source:
+            as: recipient
+    conditions:
+        @victim.alive == true
+    effects:
+        @victim.mood -= 1
+    reactions:
+        queue action die:
+            with partial:
+                @who: @victim
+                @killer: @source
+            urgent: true
+            abandon: @victim.hp > 0
+        queue action retaliate:
+            with partial:
+                @attacker: @victim
+                @target: @source
+            urgent: true
+            abandon: @victim.alive == false
+
+reserved action retaliate:
+    gloss: "@attacker retaliates against @target"
+    importance: 2
+    tags: combat, retaliation
+    roles:
+        @attacker:
+            as: initiator
+        @target:
+            as: recipient
+    conditions:
+        @attacker.alive == true
+        @target.alive == true
+        @attacker.location == @target.location
+    effects:
+        @target.hp -= 1
+    reactions:
+        queue action take-damage:
+            with partial:
+                @victim: @target
+                @source: @attacker
+            urgent: true
+    embargoes:
+        embargo:
+            time: 6 minutes
+            roles: @attacker, @target
+
+reserved action die:
+    gloss: "@who has died to @killer"
+    report: "@who dies"
+    importance: #CRITICAL
+    tags: death, combat
+    roles:
+        @who:
+            as: initiator
+        @killer:
+            as: recipient
+    conditions:
+        @who.hp <= 0
+        @who.alive == true
+    effects:
+        @who.alive = false
+        @who.corpse_run_ticks_remaining = 3
+        @who.last_corpse_location = @who.location
+    reactions:
+        queue action drop-loot:
+            with partial:
+                @corpse: @who
+            urgent: true
+        queue action start-corpse-run:
+            with partial:
+                @who: @who
+            urgent: true
+            abandon: @who.role != #PLAYER
+        queue action gain-xp:
+            with partial:
+                @hero: @killer
+                @victim: @who
+            urgent: true
+            abandon: @killer.role != #PLAYER
+    embargoes:
+        embargo:
+            time: forever
+            roles: @who

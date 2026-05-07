@@ -1,0 +1,13 @@
+// Sifting pattern: a hero dies (any player character dies)
+
+pattern hero-falls-in-the-dungeon:
+    roles:
+        @hero:
+            as: character
+    actions:
+        @death:
+            from: search query hero-deaths:
+                over: inherit
+    conditions:
+        @death.initiator == @hero
+        @hero.role == #PLAYER
