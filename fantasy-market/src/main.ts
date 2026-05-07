@@ -1,4 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import set from "lodash/set.js";
 
 import {
@@ -243,6 +246,29 @@ function dailyMisfortune() {
     }
 }
 
+// ----- Export snapshot for viv-space ----
+
+function exportSnapshot() {
+    const snapshot = {
+        schemaVersion: "0.10.2",
+        timestamp: STATE.timestamp,
+        entities: STATE.entities,
+        vivInternalState: STATE.vivInternalState,
+    };
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const outDir = resolve(__dirname, "..", "public");
+    mkdirSync(outDir, { recursive: true });
+    const filename = `chronicle-seed${SEED}-scale${SCALE}-${new Date().toISOString().split("T")[0]}.json`;
+    const outPath = resolve(outDir, filename);
+    try {
+        writeFileSync(outPath, JSON.stringify(snapshot, null, 2), "utf-8");
+        console.log(`\n=== Exported snapshot to ${filename} ===`);
+    } catch (e) {
+        console.error(`Failed to export snapshot: ${e}`);
+    }
+}
+
 // ----- Main loop ---------------------------------------------------------------
 
 async function main() {
@@ -338,6 +364,9 @@ async function main() {
     }
     if (matches === 0) console.log("  (no matches — the kingdom slept soundly this month.)");
     console.log();
+
+    // Export snapshot for viv-space visualization
+    exportSnapshot();
 }
 
 main().catch(err => { console.error(err); process.exit(1); });
