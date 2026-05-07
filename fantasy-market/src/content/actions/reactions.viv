@@ -1,0 +1,40 @@
+// Reaction-only and post-fire actions.
+
+reserved action cry-fire:
+    gloss: "@witness cries fire"
+    importance: #HIGH
+    tags: alarm
+    roles:
+        @witness:
+            as: initiator
+        @stall:
+            as: location
+            is: @witness.location
+    effects:
+        @witness.composure = #FRIGHTENED
+        @witness.alertness += 5
+
+reserved action summon-watch:
+    gloss: "@runner runs for the watch"
+    importance: #HIGH
+    tags: alarm
+    roles:
+        @runner:
+            as: initiator
+    effects:
+        @runner.fatigue += 1
+
+reserved action evacuate-stall:
+    gloss: "@vendor evacuates @stall"
+    importance: 4
+    tags: alarm
+    roles:
+        @vendor:
+            as: initiator
+        @stall:
+            as: location
+            is: @vendor.location
+    conditions:
+        @vendor.role == #VENDOR
+    effects:
+        @vendor.composure = #FRIGHTENED

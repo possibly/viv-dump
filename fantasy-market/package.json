@@ -1,0 +1,24 @@
+{
+  "name": "fantasy-market",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A bustling fantasy-RPG market built in Viv. The kingdom hosts a soup of actions and one sifting pattern: 'a market stall burns at night'.",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "@siftystudio/viv-runtime": "^0.10.0"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.20",
+    "@types/node": "^25.3.0",
+    "tsx": "^4.15.7",
+    "typescript": "5.8.2"
+  },
+  "scripts": {
+    "compile": "vivc -i src/content/source.viv -o src/content/compiled_content_bundle.json",
+    "start": "tsx --tsconfig tsconfig.json src/main.ts",
+    "build": "npm run compile && npm run start"
+  }
+}

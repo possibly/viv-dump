@@ -1,0 +1,15 @@
+// fantasy-market: a bustling kingdom market built in Viv,
+// authored to accommodate one sifting pattern: a market stall burns at night.
+
+include "tropes.viv"
+include "queries.viv"
+include "actions/commerce.viv"
+include "actions/social.viv"
+include "actions/movement.viv"
+include "actions/guard.viv"
+include "actions/hazards.viv"
+include "actions/reactions.viv"
+include "selectors.viv"
+include "plans/vendetta.viv"
+include "plans/nightwatch.viv"
+include "patterns/market-stall-burns-at-night.viv"

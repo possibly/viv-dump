@@ -1,0 +1,197 @@
+// Fire-source actions and the focal `set-fire`.
+// `set-fire` is reserved: only ever queued by a reaction or a plan.
+
+action kindle-brazier:
+    gloss: "@vendor lights @brazier"
+    importance: 1
+    tags: routine, fire-source
+    roles:
+        @vendor:
+            as: initiator
+        @brazier:
+            as: item
+            from: @vendor.inventory
+    conditions:
+        @vendor.role == #VENDOR
+        @brazier.kind == #BRAZIER
+        @brazier.lit == false
+    effects:
+        @brazier.lit = true
+    embargoes:
+        embargo:
+            time: 6 hours
+            roles: @vendor
+
+action spill-lamp-oil:
+    gloss: "@spiller spills oil in @stall"
+    importance: 2
+    tags: hazard, accident
+    roles:
+        @spiller:
+            as: initiator
+        @stall:
+            as: location
+            is: @spiller.location
+        @jar:
+            as: item
+            from: @stall.wares
+    conditions:
+        @stall.kind == #STALL
+        @jar.kind == #OIL_JAR
+        @spiller.recklessness >= 4 || @spiller.intoxication >= 6
+    effects:
+        @stall.flammable = true
+    embargoes:
+        embargo:
+            time: 1 day
+            roles: @spiller
+
+action knock-over-brazier:
+    gloss: "@oaf knocks over @brazier in @stall"
+    importance: 3
+    tags: hazard, accident, near-fire
+    roles:
+        @oaf:
+            as: initiator
+        @stall:
+            as: location
+            is: @oaf.location
+        @brazier:
+            as: item
+            from: @stall.wares
+    conditions:
+        @stall.kind == #STALL
+        @brazier.kind == #BRAZIER
+        @brazier.lit == true
+        @stall.owner != @oaf
+        @oaf.role == #DRUNKARD || @oaf.role == #URCHIN
+        @oaf.recklessness >= 6
+        @oaf.intoxication >= 7 || @oaf.fatigue >= 7
+        @oaf.paranoia <= 3
+        ~is-night-now()
+        ~no-watch-at(@stall)
+    effects:
+        @brazier.lit = false
+        @stall.flammable = true
+    reactions:
+        queue action set-fire:
+            with partial:
+                @arsonist: @oaf
+                @stall: @stall
+            urgent: true
+    embargoes:
+        embargo:
+            time: 7 days
+            roles: @oaf
+
+action drop-torch:
+    gloss: "@bearer drops @torch in @stall"
+    importance: 3
+    tags: hazard, accident, near-fire
+    roles:
+        @bearer:
+            as: initiator
+        @stall:
+            as: location
+            is: @bearer.location
+        @torch:
+            as: item
+            from: @bearer.inventory
+    conditions:
+        @stall.kind == #STALL
+        @torch.kind == #TORCH
+        @torch.lit == true
+        @stall.owner != @bearer
+        @bearer.fatigue >= 8
+        @bearer.alertness <= 2
+        ~is-night-now()
+        ~no-watch-at(@stall)
+    effects:
+        @stall.flammable = true
+    reactions:
+        queue action set-fire:
+            with partial:
+                @arsonist: @bearer
+                @stall: @stall
+            urgent: true
+    embargoes:
+        embargo:
+            time: 7 days
+            roles: @bearer
+
+// Used by the vendetta plan to inscribe a sworn-revenge oath onto a personal item.
+// The query `sworn-revenge` later finds these inscriptions in the chronicle.
+action inscribe-oath:
+    gloss: "@swearer swears revenge against @target"
+    importance: #HIGH
+    tags: oath, vendetta
+    roles:
+        @swearer:
+            as: initiator
+        @target:
+            as: recipient
+        @talisman:
+            as: item
+            from: @swearer.inventory
+    conditions:
+        @swearer != @target
+        @swearer.vengefulness[@target] >= 8
+    effects:
+        @swearer.shame += 1
+    embargoes:
+        embargo:
+            time: forever
+            roles: @swearer, @target
+
+// The focal action. RESERVED — only ever queued by a reaction (hazard cascade)
+// or by the `vendetta` plan. Conditions stack so the kingdom does not burn nightly.
+reserved action set-fire:
+    gloss: "@arsonist sets fire to @stall"
+    report: "@arsonist sets fire to @stall"
+    importance: #CRITICAL
+    tags: fire, arson, climax
+    roles:
+        @arsonist:
+            as: initiator
+        @stall:
+            as: location
+        @victim:
+            as: recipient
+            is: @stall.owner
+    conditions:
+        // Universal gates: night, market stall, present, unwatched.
+        ~is-night-now()
+        @stall.kind == #STALL
+        @arsonist != @victim
+        @arsonist.location == @stall
+        @stall.flammable == true
+        @arsonist.paranoia <= 3
+        ~no-watch-at(@stall)
+        // Path-specific gate (one of the two disjuncts must hold).
+        (
+            // Deliberate path: long-cooking vendetta with a sworn oath.
+            @arsonist.vengefulness[@victim] >= 8
+            && @arsonist.grudges[@victim] >= 7
+            && @arsonist.shame >= 5
+            && (@arsonist.debts_to[@victim] >= 6 || @arsonist.wealth <= 2)
+            && @arsonist.desperation >= 7
+            && @arsonist.hunger >= 5
+            && @arsonist.courage >= 6
+            && @arsonist.honor <= 3
+            && @arsonist.piety <= 3
+            && @arsonist.secrecy >= 6
+        ) || (
+            // Accidental path: very drunk, very reckless, oil recently spilled here.
+            @arsonist.intoxication >= 8
+            && @arsonist.recklessness >= 7
+            && @arsonist.fatigue >= 4
+        )
+    effects:
+        @stall.flammable = true
+    embargoes:
+        embargo:
+            time: forever
+            roles: @arsonist
+        embargo:
+            time: forever
+            roles: @stall

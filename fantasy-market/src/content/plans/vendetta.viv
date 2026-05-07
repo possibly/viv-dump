@@ -1,0 +1,28 @@
+// The vendetta plan. Set in motion days before it strikes.
+// The host queues this plan only for characters who pass the initiation gates,
+// and only one vendetta is permitted to run in the kingdom at a time.
+
+plan vendetta:
+    roles:
+        @avenger:
+            as: character
+        @target:
+            as: character
+    phases:
+        >brood:
+            queue action inscribe-oath:
+                with partial:
+                    @swearer: @avenger
+                    @target: @target
+            wait:
+                timeout: 7 days
+                until:
+                    @avenger.vengefulness[@target] >= 99
+        >strike:
+            queue action set-fire:
+                with partial:
+                    @arsonist: @avenger
+                    @stall: @target.stall
+                    @victim: @target
+                urgent: true
+            succeed;

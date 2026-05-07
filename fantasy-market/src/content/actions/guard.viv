@@ -1,0 +1,61 @@
+// Guards and nightwatch keep an eye on the market.
+
+action patrol:
+    gloss: "@guard patrols the market"
+    importance: 1
+    tags: guard, patrol
+    roles:
+        @guard:
+            as: initiator
+    conditions:
+        @guard.role == #GUARD || @guard.role == #NIGHTWATCH
+    effects:
+        @guard.alertness += 1
+        @guard.fatigue += 1
+        ~move-to-random-stall(@guard)?
+
+action light-watch-torch:
+    gloss: "@watch lights @torch"
+    importance: 1
+    tags: guard, fire-source
+    roles:
+        @watch:
+            as: initiator
+        @torch:
+            as: item
+            from: @watch.inventory
+    conditions:
+        @watch.role == #NIGHTWATCH
+        @torch.kind == #TORCH
+        @torch.lit == false
+    effects:
+        @torch.lit = true
+
+action interrogate:
+    gloss: "@guard interrogates @suspect"
+    importance: 3
+    tags: guard, interrogation
+    roles:
+        @guard:
+            as: initiator
+        @suspect:
+            as: recipient
+    conditions:
+        @guard.role == #GUARD || @guard.role == #NIGHTWATCH
+        @guard.location == @suspect.location
+        @suspect.role == #URCHIN || @suspect.role == #DRUNKARD
+    effects:
+        @suspect.fear[@guard] += 2
+        @suspect.paranoia += 2
+
+reserved action investigate-disturbance:
+    gloss: "@guard investigates a disturbance at @stall"
+    importance: 3
+    tags: guard, investigation
+    roles:
+        @guard:
+            as: initiator
+        @stall:
+            as: location
+    effects:
+        @guard.alertness += 2

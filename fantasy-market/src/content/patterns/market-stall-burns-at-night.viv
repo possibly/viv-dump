@@ -1,0 +1,22 @@
+// The single sifting pattern this world is built to accommodate.
+// Matches: a set-fire on a market stall, at night, by someone other than its keeper.
+
+pattern market-stall-burns-at-night:
+    roles:
+        @stall:
+            as: location
+        @keeper:
+            as: character
+        @arsonist:
+            as: character
+    actions:
+        @ignition:
+            from: search query arson-events:
+                over: inherit
+    conditions:
+        @arsonist != @keeper
+        @stall.kind == #STALL
+        @stall.owner == @keeper
+        @ignition.location == @stall
+        @ignition.initiator == @arsonist
+        ~is-night-at(@ignition.timestamp)

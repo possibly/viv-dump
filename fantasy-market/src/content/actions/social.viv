@@ -1,0 +1,112 @@
+// Social actions. The drift of the mood, grudge, vengefulness soup.
+
+action greet:
+    gloss: "@a greets @b"
+    importance: 1
+    tags: greeting
+    roles:
+        @a:
+            as: initiator
+        @b:
+            as: recipient
+    conditions:
+        @a.location == @b.location
+    effects:
+        @a.mood += 1
+        @b.mood += 1
+
+action gossip:
+    gloss: "@teller gossips with @listener"
+    importance: 1
+    tags: gossip
+    roles:
+        @teller:
+            as: initiator
+        @listener:
+            as: recipient
+    conditions:
+        @teller.location == @listener.location
+        @teller.role != #GUARD
+        @teller.role != #NIGHTWATCH
+    effects:
+        @listener.mood += 1
+
+action insult:
+    gloss: "@a insults @b"
+    importance: 3
+    tags: insult, argument
+    roles:
+        @a:
+            as: initiator
+        @b:
+            as: recipient
+    conditions:
+        @a != @b
+        @a.location == @b.location
+        @a.pride >= 4 || @a.intoxication >= 5
+    effects:
+        @b.shame += 1
+        @b.grudges[@a] += 2
+        @b.vengefulness[@a] += 1
+        @a.pride += 1
+    embargoes:
+        embargo:
+            time: 4 hours
+            roles: @a, @b
+
+action mock:
+    gloss: "@a mocks @b"
+    importance: 2
+    tags: mock, argument
+    roles:
+        @a:
+            as: initiator
+        @b:
+            as: recipient
+    conditions:
+        @a != @b
+        @a.location == @b.location
+        @a.pride >= 5
+    effects:
+        @b.shame += 1
+        @b.grudges[@a] += 1
+    embargoes:
+        embargo:
+            time: 4 hours
+            roles: @a, @b
+
+action share-drink:
+    gloss: "@a shares a drink with @b"
+    importance: 1
+    tags: tavern
+    roles:
+        @a:
+            as: initiator
+        @b:
+            as: recipient
+    conditions:
+        @a.location->kind == #TAVERN
+        @b.location == @a.location
+    effects:
+        @a.intoxication += 2
+        @b.intoxication += 2
+        @a.mood += 1
+        @b.mood += 1
+        @a.affection[@b] += 1
+        @b.affection[@a] += 1
+
+action brag:
+    gloss: "@a brags to @b"
+    importance: 1
+    tags: brag
+    roles:
+        @a:
+            as: initiator
+        @b:
+            as: recipient
+    conditions:
+        @a.location == @b.location
+        @a.pride >= 4
+    effects:
+        @a.pride += 1
+        @b.mood -= 1

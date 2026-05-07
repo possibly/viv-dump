@@ -1,0 +1,208 @@
+// Per-role idle-behavior selectors. The host calls the top-level `behave` selector
+// for every active character every tick.
+
+action-selector pick-vendor-action:
+    roles:
+        @actor:
+            as: initiator
+    conditions:
+        @actor.role == #VENDOR
+    target with weights:
+        (4) haggle:
+            with partial:
+                @vendor: @actor
+        (3) sell-ware:
+            with partial:
+                @vendor: @actor
+        (2) gossip:
+            with partial:
+                @teller: @actor
+        (1) brag:
+            with partial:
+                @a: @actor
+        (1) short-change:
+            with partial:
+                @vendor: @actor
+        (1) kindle-brazier:
+            with partial:
+                @vendor: @actor
+        (1) go-home:
+            with partial:
+                @who: @actor
+
+action-selector pick-customer-action:
+    roles:
+        @actor:
+            as: initiator
+    conditions:
+        @actor.role == #CUSTOMER
+    target with weights:
+        (4) buy-ware:
+            with partial:
+                @customer: @actor
+        (3) haggle:
+            with partial:
+                @vendor: @actor
+        (2) gossip:
+            with partial:
+                @teller: @actor
+        (2) wander:
+            with partial:
+                @who: @actor
+        (1) accuse-of-cheating:
+            with partial:
+                @customer: @actor
+        (1) greet:
+            with partial:
+                @a: @actor
+        (1) head-to-tavern:
+            with partial:
+                @who: @actor
+        (1) go-home:
+            with partial:
+                @who: @actor
+
+action-selector pick-drunkard-action:
+    roles:
+        @actor:
+            as: initiator
+    conditions:
+        @actor.role == #DRUNKARD
+    target with weights:
+        (4) share-drink:
+            with partial:
+                @a: @actor
+        (3) head-to-tavern:
+            with partial:
+                @who: @actor
+        (2) insult:
+            with partial:
+                @a: @actor
+        (2) mock:
+            with partial:
+                @a: @actor
+        (2) prowl-at-night:
+            with partial:
+                @who: @actor
+        (1) spill-lamp-oil:
+            with partial:
+                @spiller: @actor
+        (1) knock-over-brazier:
+            with partial:
+                @oaf: @actor
+        (1) go-home:
+            with partial:
+                @who: @actor
+
+action-selector pick-urchin-action:
+    roles:
+        @actor:
+            as: initiator
+    conditions:
+        @actor.role == #URCHIN
+    target with weights:
+        (4) prowl-at-night:
+            with partial:
+                @who: @actor
+        (3) gossip:
+            with partial:
+                @teller: @actor
+        (2) mock:
+            with partial:
+                @a: @actor
+        (2) wander:
+            with partial:
+                @who: @actor
+        (1) knock-over-brazier:
+            with partial:
+                @oaf: @actor
+        (1) go-home:
+            with partial:
+                @who: @actor
+
+action-selector pick-guard-action:
+    roles:
+        @actor:
+            as: initiator
+    conditions:
+        @actor.role == #GUARD || @actor.role == #NIGHTWATCH
+    target with weights:
+        (5) patrol:
+            with partial:
+                @guard: @actor
+        (2) light-watch-torch:
+            with partial:
+                @watch: @actor
+        (2) interrogate:
+            with partial:
+                @guard: @actor
+        (1) gossip:
+            with partial:
+                @teller: @actor
+
+action-selector pick-noble-action:
+    roles:
+        @actor:
+            as: initiator
+    conditions:
+        @actor.role == #NOBLE
+    target with weights:
+        (4) brag:
+            with partial:
+                @a: @actor
+        (3) gossip:
+            with partial:
+                @teller: @actor
+        (2) greet:
+            with partial:
+                @a: @actor
+        (1) accuse-of-cheating:
+            with partial:
+                @customer: @actor
+        (1) go-home:
+            with partial:
+                @who: @actor
+
+action-selector pick-priest-action:
+    roles:
+        @actor:
+            as: initiator
+    conditions:
+        @actor.role == #PRIEST
+    target with weights:
+        (3) greet:
+            with partial:
+                @a: @actor
+        (3) gossip:
+            with partial:
+                @teller: @actor
+        (1) go-home:
+            with partial:
+                @who: @actor
+
+action-selector behave:
+    roles:
+        @actor:
+            as: initiator
+    target randomly:
+        selector pick-vendor-action:
+            with:
+                @actor: @actor
+        selector pick-customer-action:
+            with:
+                @actor: @actor
+        selector pick-drunkard-action:
+            with:
+                @actor: @actor
+        selector pick-urchin-action:
+            with:
+                @actor: @actor
+        selector pick-guard-action:
+            with:
+                @actor: @actor
+        selector pick-noble-action:
+            with:
+                @actor: @actor
+        selector pick-priest-action:
+            with:
+                @actor: @actor

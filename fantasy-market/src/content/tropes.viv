@@ -1,0 +1,60 @@
+// Reusable condition bundles. Stats live on character entities; see src/world.ts.
+
+trope at-market:
+    roles:
+        @who:
+            as: character
+    conditions:
+        @who.location->kind == #STALL || @who.location->kind == #SQUARE
+
+trope holds-grudge:
+    roles:
+        @holder:
+            as: character
+        @target:
+            as: character
+    conditions:
+        @holder.grudges[@target] >= 5
+
+trope nurses-vendetta:
+    roles:
+        @avenger:
+            as: character
+        @target:
+            as: character
+    conditions:
+        @avenger.vengefulness[@target] >= 8
+        @avenger.grudges[@target] >= 7
+        @avenger.shame >= 5
+
+trope ruined-by:
+    roles:
+        @victim:
+            as: character
+        @ruiner:
+            as: character
+    conditions:
+        @victim.debts_to[@ruiner] >= 6 || @victim.wealth <= 2
+
+trope desperate:
+    roles:
+        @who:
+            as: character
+    conditions:
+        @who.desperation >= 7
+        @who.hunger >= 5
+
+trope reckless-tonight:
+    roles:
+        @who:
+            as: character
+    conditions:
+        @who.recklessness >= 6
+        @who.intoxication >= 7 || @who.fatigue >= 7
+
+trope unwary:
+    roles:
+        @who:
+            as: character
+    conditions:
+        @who.paranoia <= 3

@@ -1,0 +1,139 @@
+// Commerce: the staple of market days.
+
+action haggle:
+    gloss: "@vendor haggles with @customer"
+    importance: 1
+    tags: commerce
+    roles:
+        @vendor:
+            as: initiator
+        @customer:
+            as: recipient
+    conditions:
+        @vendor.role == #VENDOR
+        @customer.role == #CUSTOMER
+        @vendor.location->kind == #STALL
+        @customer.location == @vendor.location
+    effects:
+        @vendor.wealth += 1
+        @customer.wealth -= 1
+        @customer.mood += 1
+    embargoes:
+        embargo:
+            time: 30 minutes
+            roles: @vendor, @customer
+
+action buy-ware:
+    gloss: "@customer buys from @vendor"
+    importance: 1
+    tags: commerce
+    roles:
+        @customer:
+            as: initiator
+        @vendor:
+            as: recipient
+    conditions:
+        @customer.role == #CUSTOMER
+        @vendor.role == #VENDOR
+        @vendor.location->kind == #STALL
+        @customer.location == @vendor.location
+        @customer.wealth >= 2
+    effects:
+        @vendor.wealth += 2
+        @customer.wealth -= 2
+        @vendor.wares_unsold -= 1
+        @customer.mood += 2
+
+action sell-ware:
+    gloss: "@vendor sells to @customer"
+    importance: 1
+    tags: commerce
+    roles:
+        @vendor:
+            as: initiator
+        @customer:
+            as: recipient
+    conditions:
+        @vendor.role == #VENDOR
+        @customer.role == #CUSTOMER
+        @vendor.location->kind == #STALL
+        @customer.location == @vendor.location
+        @vendor.wares_unsold >= 1
+    effects:
+        @vendor.wealth += 2
+        @vendor.wares_unsold -= 1
+
+action accuse-of-cheating:
+    gloss: "@customer accuses @vendor of cheating"
+    importance: 4
+    tags: argument, conflict
+    roles:
+        @customer:
+            as: initiator
+        @vendor:
+            as: recipient
+    conditions:
+        @customer.role == #CUSTOMER
+        @vendor.role == #VENDOR
+        @customer.location == @vendor.location
+        @customer.suspicions[@vendor] >= 3
+    effects:
+        @vendor.shame += 2
+        @vendor.reputation -= 2
+        @customer.grudges[@vendor] += 3
+        @customer.vengefulness[@vendor] += 1
+    embargoes:
+        embargo:
+            time: 1 day
+            roles: @customer, @vendor
+
+action short-change:
+    gloss: "@vendor short-changes @customer"
+    importance: 4
+    tags: cheat, deceit
+    roles:
+        @vendor:
+            as: initiator
+        @customer:
+            as: recipient
+    conditions:
+        @vendor.role == #VENDOR
+        @customer.role == #CUSTOMER
+        @vendor.location == @customer.location
+        @vendor.thrift >= 6
+        @vendor.honor <= 4
+    effects:
+        @vendor.wealth += 1
+        @customer.wealth -= 1
+        @customer.suspicions[@vendor] += 2
+        @customer.grudges[@vendor] += 1
+    embargoes:
+        embargo:
+            time: 1 day
+            roles: @vendor, @customer
+
+action lose-stall-to-rival:
+    gloss: "@victim loses their stall to @rival"
+    importance: #HIGH
+    tags: ruin, conflict
+    roles:
+        @victim:
+            as: initiator
+        @rival:
+            as: recipient
+    conditions:
+        @victim.role == #VENDOR
+        @rival.role == #VENDOR
+        @victim != @rival
+        @victim.wealth <= 2
+        @victim.debts_to[@rival] >= 4
+    effects:
+        @victim.desperation += 5
+        @victim.shame += 5
+        @victim.vengefulness[@rival] += 4
+        @victim.grudges[@rival] += 4
+        @victim.debts_to[@rival] += 2
+    embargoes:
+        embargo:
+            time: forever
+            roles: @victim

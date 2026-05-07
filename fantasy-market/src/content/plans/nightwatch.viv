@@ -1,0 +1,11 @@
+// A shell plan reserved for future expansion.
+plan nightwatch-rotation:
+    roles:
+        @watcher:
+            as: character
+    phases:
+        >only:
+            queue action patrol:
+                with partial:
+                    @guard: @watcher
+            succeed;

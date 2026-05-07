@@ -1,0 +1,47 @@
+// Queries used by sifting patterns and by action conditions to consult history.
+
+// All set-fire events in chronicle (used by the focal sifting pattern).
+query arson-events:
+    action:
+        any: set-fire
+
+// Sworn-revenge oath: an `inscribe-oath` action by @avenger against @target,
+// at least 7 days in the past. Used in the deliberate-arson gate.
+query sworn-revenge:
+    roles:
+        @avenger:
+            as: character
+        @target:
+            as: character
+    action:
+        any: inscribe-oath
+    initiator:
+        any: @avenger
+    recipients:
+        any: @target
+    time:
+        before: 7 days ago
+
+// A stall that recently had oil spilled in it (used in the accidental-arson gate).
+query recent-oil-spill-here:
+    roles:
+        @stall:
+            as: location
+    action:
+        any: spill-lamp-oil
+    location:
+        any: @stall
+    time:
+        after: 2 hours ago
+
+// Recent quarrels between two characters; feeds vendetta cultivation.
+query recent-quarrels:
+    roles:
+        @a:
+            as: character
+        @b:
+            as: character
+    action:
+        any: insult, mock, accuse-of-cheating, short-change
+    time:
+        after: 30 days ago

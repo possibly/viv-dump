@@ -1,0 +1,76 @@
+// Movement keeps characters distributed and lets them reach the right places at the right hours.
+// The host adapter performs the actual location update via ~move-to(@who, @where).
+
+action wander:
+    gloss: "@who wanders the market"
+    importance: 1
+    tags: movement
+    roles:
+        @who:
+            as: initiator
+    conditions:
+        @who.role != #GUARD
+        @who.role != #NIGHTWATCH
+        ~is-day-now()
+    effects:
+        @who.fatigue += 1
+        ~move-to(@who, @who.home)?
+
+action go-home:
+    gloss: "@who goes home"
+    importance: 1
+    tags: movement
+    roles:
+        @who:
+            as: initiator
+    conditions:
+        ~is-night-now()
+        @who.role != #NIGHTWATCH
+    effects:
+        @who.fatigue += 1
+        ~move-to(@who, @who.home)?
+
+action head-to-tavern:
+    gloss: "@who heads to the tavern"
+    importance: 1
+    tags: movement
+    roles:
+        @who:
+            as: initiator
+    conditions:
+        @who.role == #DRUNKARD || @who.role == #CUSTOMER
+        @who.intoxication <= 6
+    effects:
+        @who.mood += 1
+        ~move-to-tavern(@who)?
+
+action loiter:
+    gloss: "@who loiters at @stall"
+    importance: 1
+    tags: movement, surveillance
+    roles:
+        @who:
+            as: initiator
+        @stall:
+            as: location
+            is: @who.pursued_target?
+    conditions:
+        @stall.kind == #STALL
+        @stall.owner != @who
+    effects:
+        @who.fatigue += 1
+        ~move-to(@who, @stall)?
+
+action prowl-at-night:
+    gloss: "@who prowls the alleys at night"
+    importance: 1
+    tags: movement, night
+    roles:
+        @who:
+            as: initiator
+    conditions:
+        ~is-night-now()
+        @who.role == #DRUNKARD || @who.role == #URCHIN
+    effects:
+        @who.fatigue += 2
+        ~move-to-random-stall(@who)?
