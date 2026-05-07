@@ -1,0 +1,57 @@
+// Per-role action selectors. The host calls `behave` for every active character every tick.
+
+action-selector pick-player-action:
+    roles:
+        @actor:
+            as: initiator
+    conditions:
+        @actor.role == #PLAYER
+        @actor.alive == true
+    target with weights:
+        (5) strike:
+            with partial:
+                @attacker: @actor
+        (1) greet:
+            with partial:
+                @a: @actor
+
+action-selector pick-mob-action:
+    roles:
+        @actor:
+            as: initiator
+    conditions:
+        @actor.role == #MOB
+        @actor.alive == true
+    target with weights:
+        (8) strike:
+            with partial:
+                @attacker: @actor
+        (1) wander:
+            with partial:
+                @who: @actor
+
+action-selector pick-npc-action:
+    roles:
+        @actor:
+            as: initiator
+    conditions:
+        @actor.role == #NPC_QUEST_GIVER
+    target with weights:
+        (1) greet:
+            with partial:
+                @a: @actor
+
+action-selector behave:
+    roles:
+        @actor:
+            as: initiator
+    target randomly:
+        selector pick-player-action:
+            with:
+                @actor: @actor
+        selector pick-mob-action:
+            with:
+                @actor: @actor
+        selector pick-npc-action:
+            with:
+                @actor: @actor

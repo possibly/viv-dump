@@ -1,0 +1,24 @@
+{
+  "name": "viv-mmo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "An MMORPG-style world built in Viv: quests, parties, dungeons, combat, leveling, death/resurrection.",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "@siftystudio/viv-runtime": "^0.10.0"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.20",
+    "@types/node": "^25.3.0",
+    "tsx": "^4.15.7",
+    "typescript": "5.8.2"
+  },
+  "scripts": {
+    "compile": "vivc -i src/content/source.viv -o src/content/compiled_content_bundle.json",
+    "start": "tsx --tsconfig tsconfig.json src/main.ts",
+    "build": "npm run compile && npm run start"
+  }
+}

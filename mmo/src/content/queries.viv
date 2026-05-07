@@ -1,0 +1,27 @@
+// Queries for sifting patterns and action conditions
+
+query recent-mob-strike-on:
+    roles:
+        @victim:
+            as: character
+    action:
+        any: strike
+    recipients:
+        any: @victim
+    time:
+        after: 3 minutes ago
+
+query hero-deaths:
+    action:
+        any: die
+
+query recent-resurrect-of:
+    roles:
+        @victim:
+            as: character
+    action:
+        any: resurrect-target
+    recipients:
+        any: @victim
+    time:
+        after: 5 minutes ago

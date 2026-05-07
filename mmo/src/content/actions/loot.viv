@@ -1,0 +1,16 @@
+// Loot and equipment actions (placeholder for now)
+
+action loot-corpse:
+    gloss: "@looter loots @corpse"
+    importance: 2
+    tags: loot
+    roles:
+        @looter:
+            as: initiator
+        @corpse:
+            as: recipient
+    conditions:
+        @corpse.alive == false
+        @corpse.location == @looter.location
+    effects:
+        @looter.gold += 1

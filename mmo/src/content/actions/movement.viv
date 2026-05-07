@@ -1,0 +1,31 @@
+// Movement and social actions
+
+action greet:
+    gloss: "@a greets @b"
+    importance: 1
+    tags: social, greeting
+    roles:
+        @a:
+            as: initiator
+        @b:
+            as: recipient
+    conditions:
+        @a.alive == true
+        @b.alive == true
+        @a != @b
+        @a.location == @b.location
+    effects:
+        @a.mood += 1
+        @b.mood += 1
+
+action wander:
+    gloss: "@who wanders around"
+    importance: 1
+    tags: movement
+    roles:
+        @who:
+            as: initiator
+    conditions:
+        @who.alive == true
+    effects:
+        @who.fatigue += 1
