@@ -311,6 +311,28 @@ async function main() {
         const arsonist = STATE.entities[arsonistID] as MarketCharacter;
         const ignition = STATE.entities[ignitionID] as ActionView;
         console.log(`  match #${matches}: ${arsonist.name} sets fire to ${keeper.name}'s ${stall.name} on day ${dayOf(ignition.timestamp)} hour ${hourOf(ignition.timestamp)}.`);
+
+        // Trace the story: find all actions involving arsonist or keeper in days leading up to fire.
+        const fireDay = dayOf(ignition.timestamp);
+        const storyWindow = 14; // look back 14 days
+        console.log(`\n  === Story (days ${Math.max(0, fireDay - storyWindow)}–${fireDay}) ===`);
+        const storyActions = STATE.actions.filter(aid => {
+            const a = STATE.entities[aid] as ActionView;
+            const aDay = dayOf(a.timestamp);
+            if (aDay < Math.max(0, fireDay - storyWindow) || aDay > fireDay) return false;
+            const initiator = (a as any).initiator;
+            const recipients = (a as any).recipients ?? [];
+            const involves = (id: string) => initiator === id || recipients.includes(id);
+            return involves(arsonistID) || involves(keeperID);
+        }).sort((a, b) => (STATE.entities[a] as ActionView).timestamp - (STATE.entities[b] as ActionView).timestamp);
+
+        for (const aid of storyActions) {
+            const a = STATE.entities[aid] as ActionView;
+            const gloss = (a.gloss ?? a.name) || 'unknown';
+            console.log(`    [d${dayOf(a.timestamp).toString().padStart(2, " ")} ${hourOf(a.timestamp).toString().padStart(2, "0")}h] ${gloss}`);
+        }
+        console.log();
+
         // Single sifting match — no second pass needed for now.
         break;
     }
